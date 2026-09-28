@@ -1,0 +1,9 @@
+# Per-project config contains no secrets by design (creds are env vars),
+# but keep real project configs out of version control by default.
+config/*.json
+!config/project.example.json
+
+.env
+*.env
+__pycache__/
+*.pyc

@@ -1,0 +1,37 @@
+{
+  "brand": "Example Brand",
+  "domain": "example.com",
+  "slug": "example-brand",
+  "vault_path": "~/Documents/example-brand-brain",
+  "default_author": "Jane Doe",
+
+  "cms": "webflow",
+  "cms_config": {
+    "webflow": {
+      "site_id": "REPLACE_ME",
+      "collection_id": "REPLACE_ME",
+      "token_env": "WEBFLOW_API_TOKEN"
+    },
+    "wordpress": {
+      "base_url": "https://example.com",
+      "user": "REPLACE_ME",
+      "app_password_env": "WORDPRESS_APP_PASSWORD"
+    },
+    "ghost": {
+      "admin_api_url": "https://example.com/ghost/api/admin",
+      "admin_api_key_env": "GHOST_ADMIN_API_KEY"
+    }
+  },
+
+  "firecrawl_api_key_env": "FIRECRAWL_API_KEY",
+
+  "target_keywords": [
+    "example target keyword one",
+    "example target keyword two"
+  ],
+  "competitors": [
+    "competitor-one.com",
+    "competitor-two.com",
+    "competitor-three.com"
+  ]
+}
