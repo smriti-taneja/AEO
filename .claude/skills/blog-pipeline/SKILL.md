@@ -11,7 +11,8 @@ It composes these existing skills rather than duplicating them:
 - `content-strategy` (this repo) — pillar/cluster architecture, wraps `topic-cluster-planning` and `fanout-mapper`
 - `copywriting` (this repo) — voice/banned-phrase enforcement, wraps `write-content` and `humanizer`
 - `cms-drafting` (this repo) — idempotent draft push to Webflow/WordPress/Ghost
-- `ai-seo`, `content-brief`, `cite-me`, `eeat-audit` (anthropic-skills) — AEO strategy and citation-readiness
+- `content-brief`, `keyword-deep-dive`, `semantic-gap-analysis`, `fanout-mapper` (anthropic-skills) — SERP research, competitor deep-reads, and the specific gap list that makes a piece outrank what's already there
+- `ai-seo`, `cite-me`, `eeat-audit` (anthropic-skills) — AEO formatting strategy and citation-readiness
 
 ## Step 0 — Identify the project and its brain
 
@@ -35,10 +36,15 @@ Save the finished brief to `pipelines/blog/<slug>/brief.md`.
 
 Launch all three in **one message, multiple Agent calls**:
 1. **Brain query** — read the vault's `wiki/`, existing `raw/research/`, and any posts named as internal-link targets. Summarize what's already known/claimed so new content doesn't contradict it.
-2. **Fresh web** — research the target keyword, cluster angles, and named competitors (SERP, PAA, competitor structure/word counts/claims). Use Firecrawl if `FIRECRAWL_API_KEY` is set for this project, otherwise WebSearch/WebFetch.
+2. **Fresh web + competitor research** — this is where "outrank them" gets answered concretely, not vaguely. For the pillar keyword and each cluster angle:
+   - Run `content-brief` on the keyword — Googles it, reads the top 10, classifies intent, maps the content gap, and returns a writer-ready outline.
+   - Run `keyword-deep-dive` on the pillar keyword specifically — reads the top 3 ranking pages in full and returns a 90-day ranking plan, not just a summary.
+   - For every competitor named at the interview, fetch their existing page(s) on this topic directly (WebFetch, or Firecrawl if `FIRECRAWL_API_KEY` is set for this project) and record: title, heading structure, word count, and the specific claims/stats they make. This is the baseline "outrank" is measured against — don't skip it even if `content-brief`/`keyword-deep-dive` already surfaced some of the same URLs.
+   - Run `semantic-gap-analysis` comparing the brief's planned angle against those top-ranking competitor pages — it returns a specific list of entities, subtopics, and relationships missing from what currently ranks. This list is what actually earns the outrank, not the word count.
+   - Run `fanout-mapper` on the keyword to map the sub-queries AI systems fire when someone asks about this topic — this is what gets the piece surfaced inside ChatGPT/Perplexity/AI Overview answers, not just Google's top 10, and it's the core GEO input.
 3. **Structure plan** — hand the brief to the `content-strategy` skill for a first-pass pillar/cluster map and intent classification.
 
-Merge the three outputs into `raw/research/<slug>.json`.
+Merge all of this into `raw/research/<slug>.json` — per node (pillar and each cluster), it should hold: the SERP/competitor findings, the gap list, the fan-out queries, and the resulting angle. Step 4's drafting subagents write directly against this file — they do not re-research from scratch.
 
 ## Step 3 — Plan
 
@@ -47,8 +53,10 @@ Produce the pillar + 3–4 cluster plan: target query, intent (informational/com
 ## Step 4 — Build (parallel subagents — one per article, never sequential)
 
 Once the plan is confirmed, spawn **one subagent per article** (pillar + each cluster) in a single message. Each subagent:
-- Gets the plan node, the merged research, and the vault's voice/positioning context
-- Applies `references/quality-gates.md` formatting rules (direct-answer H2s, TL;DR, FAQ, etc.) while writing, not as an afterthought
+- Gets the plan node, the merged research (SERP findings, competitor baseline, gap list, fan-out queries), and the vault's voice/positioning context
+- Writes to close the specific gaps `semantic-gap-analysis` found and to answer the `fanout-mapper` sub-queries directly — not a generic rewrite of what's already ranking
+- Applies `ai-seo` and `references/quality-gates.md` formatting rules (direct-answer H2s, TL;DR, FAQ, query-pattern headings, etc.) while writing, not as an afterthought
+- Applies `cite-me` and `eeat-audit` guidance so the piece is structured to be citable and carries real E-E-A-T signals (named author, specifics, sourced claims), not just keyword coverage
 - Runs its draft through the `copywriting` skill's voice rules before returning
 - Writes to `pipelines/blog/<slug>/drafts/<article-slug>.md` with front-matter (title, meta title, meta description, author, last-updated date, target keyword)
 
